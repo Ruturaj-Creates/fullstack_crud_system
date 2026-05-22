@@ -1,12 +1,14 @@
-from fastapi import FastAPI, Depends
-from fastapi.middleware.cors import CORSMiddleware 
-from models import Products
-from database import session, engine
-import db_models
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+
+import db_models
+from database import engine, session
+from models import Products
 
 app = FastAPI()
 
+# Enable CORS for frontend communication
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -33,7 +35,7 @@ def get_db():
 
 def init_db():
     db = session()
-    count = db.query(db_models.Products).count()  # ✅ FIXED: Added ()
+    count = db.query(db_models.Products).count()
     if count == 0:
         for product in products:
             db.add(db_models.Products(**product.model_dump()))
@@ -61,11 +63,11 @@ def add_product(product: Products, db: Session = Depends(get_db)):
     db_product = db_models.Products(**product.model_dump())
     db.add(db_product)
     db.commit()
-    db.refresh(db_product)  # ✅ FIXED: Refresh to get DB instance
+    db.refresh(db_product)  
     return db_product
 
 # UPDATE product
-@app.put("/products/{id}")  # ✅ FIXED: {id} in path
+@app.put("/products/{id}") 
 def update_product(id: int, product: Products, db: Session = Depends(get_db)):
     db_product = db.query(db_models.Products).filter(db_models.Products.id == id).first()
     if db_product:
@@ -74,12 +76,12 @@ def update_product(id: int, product: Products, db: Session = Depends(get_db)):
         db_product.price = product.price
         db_product.quantity = product.quantity
         db.commit()
-        db.refresh(db_product)  # ✅ FIXED: Refresh after update
+        db.refresh(db_product)  
         return db_product
     return {"error": "No product found"}
 
 # DELETE product
-@app.delete("/products/{id}")  # ✅ FIXED: {id} in path
+@app.delete("/products/{id}") 
 def delete_product(id: int, db: Session = Depends(get_db)):
     db_product = db.query(db_models.Products).filter(db_models.Products.id == id).first()
     if db_product:
